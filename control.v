@@ -28,17 +28,61 @@ module pipeline_ctl
 	output reg [2:0] alu_operation,
 	output reg halt
 );
-	//Operator
+	//Operator 
 	parameter R_FORMAT	= 7'b0110011;
 	parameter I_FORMAT	= 7'b0010011;
 	parameter LOAD		= 7'b0000011;
 	parameter STORE		= 7'b0100011;
 	parameter SB 			= 7'b1100011;
 
-	// TODO (PA2): complete control signal generation logic for other opcodes
 	always @(opcode, funct3, funct7)
 	begin
-		if(opcode == 7'h0)	//NOP
+	    if(opcode == R_FORMAT)
+		begin
+			alu_src <= 1'b0;
+			mem_to_reg <= 1'b0;
+			reg_write <= 1'b1;
+			mem_read <= 1'b0;
+			mem_write <= 1'b0;
+			halt <= 1'b0;
+			alu_operation <= (funct3 != 3'b000) ? (funct3==3'b111 ? alu.BIT_AND : 
+					(funct3==3'b110 ? alu.BIT_OR : (funct3==3'b100 ? alu.BIT_XOR :alu.ALU_NOP))
+					):
+					(funct7 == 7'h20 ? alu.SUB_64 : (funct7 == 7'h0 ? alu.ADD_64 : alu.ALU_NOP));
+		end
+		else if(opcode == I_FORMAT)
+		begin
+			alu_src <= 1'b1;
+			mem_to_reg <= 1'b0;
+			reg_write <= 1'b1;
+			mem_read <= 1'b0;
+			mem_write <= 1'b0;
+			halt <= 1'b0;
+			alu_operation <= ((funct3 != 3'b000) ? (funct3 == 3'b111 ? alu.BIT_AND : 
+			(funct3 == 3'b110 ? alu.BIT_OR : (funct3 == 3'b100 ? alu.BIT_XOR : alu.ALU_NOP))): alu.ADD_64);
+		end
+		else if(opcode == LOAD)
+		begin
+			alu_src <= 1'b1;	
+			mem_to_reg <= 1'b1;
+			reg_write <= 1'b1;
+			mem_read <= 1'b1;
+			mem_write <= 1'b0;
+			halt <= 1'b0;
+			alu_operation <= alu.ADD_64;
+		end
+		else if(opcode == STORE)
+		begin
+			alu_src <= 1'b1;
+			mem_to_reg <= 1'bx;
+			reg_write <= 1'b0;
+			mem_read <= 1'b0;
+			mem_write <= 1'b1;
+			halt <= 1'b0;
+			alu_operation <= alu.ADD_64;
+
+		end
+		else if(opcode == 7'h0)	//NOP
 		begin
 			alu_src <= 1'b0;
 			mem_to_reg <= 1'b0;
@@ -47,7 +91,7 @@ module pipeline_ctl
 			mem_write <= 1'b0;
 			halt <= 1'b0;
 			alu_operation <= alu.ALU_NOP;
-
+			
 		end
 		else	//HALT
 		begin

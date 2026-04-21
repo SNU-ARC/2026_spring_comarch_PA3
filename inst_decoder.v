@@ -42,15 +42,16 @@ module inst_decoder
 	//R, I, S, U
 	//I: 31:20 Sext
 	//S: 31:25 - 11:7 Sext
-
+	
 	//0110011(R): Add, Sub, And, Or, Xor, Slt, Sltu, SRA
 	//0010011(I): Addi, Andi, Ori, Xori, Slti, Sltiu
 	//0000011(I): LW
 	//0100011(S): SW
 	//1100011(S): Beq, Bne, Blt, Bge, Bltu, Bgeu
 
-	// TODO (PA2): implement correct immediate decoding for each instruction type
-	assign sign_extended = 52'h0;
-	assign imm64 = 64'h0;
-
+	assign sign_extended = inst[31] ? 52'hfffffffffffff : 52'h0;
+	assign imm64 =	((opcode == 7'b0110011) ? 64'h0 : 				//R type (IMM = DC)
+			((opcode[6:5] == 2'b00) ? {sign_extended, inst[31:20]} :	//I type
+			{sign_extended, inst[31:25], inst[11:7]}));			//SW: S type, I-imm
+	
 endmodule
