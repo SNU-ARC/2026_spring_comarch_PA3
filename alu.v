@@ -31,9 +31,16 @@ module alu
 	parameter ADD_64	= 3'b110;
 	parameter SUB_64	= 3'b111;
 
-	// TODO (PA2): implement correct outputs
-	assign zero = 0;
-	assign sign = 0;
-	assign result = 64'h0;
+	wire [63:0] result_tmp;
+
+	assign result_tmp =	(op == ADD_64) ? lhs + rhs :
+				((op == SUB_64) ? lhs - rhs :
+				((op == BIT_AND) ? lhs & rhs : 
+				((op == BIT_OR) ? lhs | rhs :
+				((op == BIT_XOR) ? lhs ^ rhs : 64'h0))));
+
+	assign zero = (result_tmp == 0) ? 1'b1 : 1'b0;
+	assign sign = result_tmp[63];
+	assign result = result_tmp;
 
 endmodule
